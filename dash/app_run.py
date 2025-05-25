@@ -81,15 +81,15 @@ station_dict = {
     ]
 }
 line_colors = {
-    "1호선": "#2955A4",  # (41, 85, 164)
-    "2호선": "#00BA00",  # (0, 186, 0)
-    "3호선": "#F36F21",  # (210, 104, 61)
-    "4호선": "#3B66B6",  # (59, 102, 182)
-    "5호선": "#7947A1",  # (121, 71, 151)
-    "6호선": "#96572A",  # (150, 87, 42)
-    "7호선": "#555D10",  # (85, 93, 16)
-    "8호선": "#B43867",  # (180, 56, 103)
-    "9호선": "#C6AF5B",  # (198, 175, 91)
+    "1호선": "#2955A4",  
+    "2호선": "#00BA00",  
+    "3호선": "#F36F21",  
+    "4호선": "#3B66B6", 
+    "5호선": "#7947A1",  
+    "6호선": "#96572A",  
+    "7호선": "#555D10",  
+    "8호선": "#B43867", 
+    "9호선": "#C6AF5B",  
 }
 
 
@@ -144,7 +144,6 @@ def update_direction_radios(line, station):
     )
 
 
-# 📊 예측 및 시각화
 @app.callback(
     [Output('station_heading', 'children'),
      Output('result_graph', 'figure')],
@@ -166,45 +165,6 @@ def predict_congestion(direction, line, station_name):
     next_station = code_to_name.get(curr_code + 1, "")
     line_color = line_colors.get(line, "#000")
 
-
-    # box_style = {
-    # "minWidth": "80px",              # 고정 최소 너비 (길이에 상관없이 넉넉하게)
-    # "height": "40px",                # 고정 높이
-    # "display": "flex",               # 가운데 정렬을 위해 flex 사용
-    # "alignItems": "center",
-    # "justifyContent": "center",
-    # "fontSize": "20px",              # 글자 크기 키움
-    # "fontWeight": "bold",            # 굵게
-    # "padding": "5px 10px",
-    # "margin": "0 5px",
-    # "borderRadius": "10px"
-    # }
-    
-    # heading = html.Div([
-    #     html.Span(prev_station, style={
-    #         **box_style,
-    #         "backgroundColor": line_color,
-    #         "color": "white",
-    #         "borderTopLeftRadius": "10px",
-    #         "borderBottomLeftRadius": "10px"
-    #     }) if prev_station else None,
-
-    #     html.Span(station_name, style={
-    #         **box_style,
-    #         "backgroundColor": "white",
-    #         "color": line_color,
-    #         "border": f"2px solid {line_color}"
-    #     }),
-
-    #     html.Span(next_station, style={
-    #         **box_style,
-    #         "backgroundColor": line_color,
-    #         "color": "white",
-    #         "borderTopRightRadius": "10px",
-    #         "borderBottomRightRadius": "10px"
-    #     }) if next_station else None
-
-    # ], style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"})
 
     heading = html.Div([
             html.Span(prev_station, style={
@@ -255,7 +215,6 @@ def predict_congestion(direction, line, station_name):
         })
 
 
-    # 👇 API 예측 호출
     try:
         res = requests.post(
             url="https://friendly-potato-6q69gr56xr634wqr-8000.app.github.dev/predict",
@@ -267,7 +226,6 @@ def predict_congestion(direction, line, station_name):
         print("API 호출 실패:", e)
         return heading, go.Figure(layout_title_text="❗ 예측 실패")
 
-    # 🎨 시각화
     def map_color(c):
         if c <= 34: return "green"
         elif c <= 100: return "gold"
