@@ -53,40 +53,108 @@ import mylib as my
 
 
 
+
+
 def app_layout(items):
-    line_id, input_id, direction_id, button_id, graph_id = items
+    line_id, station_id, direction_radio_id, graph_id = items
+
+    # 호선별 색상
+    line_colors = {
+        "1호선": "#2955A4",
+        "2호선": "#00BA00",
+        "3호선": "#D2683D",
+        "4호선": "#3B66B7",
+        "5호선": "#794797",
+        "6호선": "#96572A",
+        "7호선": "#555D0F",
+        "8호선": "#B23867",
+        "9호선": "#C6AF5B"
+    }
 
     layout = html.Div([
         html.H2("지하철 칸별 혼잡도 예측"),
 
+        # 호선 선택 및 역명 입력
         html.Div([
             dcc.Dropdown(
                 id=line_id,
-                options=[{"label": f"{i}호선", "value": f"{i}호선"} for i in range(1, 10)],
+                options=[
+                    {
+                        "label": html.Span(f"{line}", style={"color": color}),
+                        "value": line
+                    } for line, color in line_colors.items()
+                ],
                 placeholder="호선을 선택하세요",
                 style={"width": "150px"}
             ),
-
             dcc.Input(
-                id=input_id,
+                id=station_id,
                 type="text",
                 placeholder="역명을 입력하세요",
-                style={"margin-left": "10px", "width": "150px"}
-            ),
-
-            dcc.RadioItems(
-                id=direction_id,
-                options=[{"label": "상행", "value": "up"}, {"label": "하행", "value": "down"}],
-                value="up",
-                labelStyle={"display": "inline-block", "margin": "0 10px"}
-            ),
-
-            html.Button("예측", id=button_id, n_clicks=0)
-        ], style={"display": "flex", "gap": "10px", "alignItems": "center"}),
+                style={"margin": "0 10px"}
+            )
+        ], style={"display": "flex", "gap": "10px"}),
 
         html.Br(),
 
-        dcc.Graph(id=graph_id)
+        # 상/하행 선택 radio
+        html.Div(id=direction_radio_id, style={"margin": "10px 0"}),
+
+        html.Br(),
+
+        # 예측 그래프
+        dcc.Graph(id=graph_id),
+
+        # ❓아이콘 + 이미지 함께 배치 (오른쪽 하단 고정)
+        html.Div([
+            html.Span("❓", id="info-icon", style={
+                'cursor': 'pointer',
+                'fontSize': '20px',
+                'color': '#007BFF',
+                'marginRight': '10px'
+            }),
+            html.Img(
+                src='/assets/complex.png',
+                style={'height': '40px'}
+            )
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'flex-end',
+            'position': 'fixed',
+            'bottom': '20px',
+            'right': '20px',
+            'zIndex': '1000'
+        }),
+
+        # ❓아이콘 클릭 시 나타나는 모달 이미지
+        html.Div(
+            id='info-modal',
+            children=[
+                html.Div([
+                    html.Button("닫기", id="close-modal", style={'float': 'right'}),
+                    html.Img(src="/assets/complex_info.png", style={'width': '100%'})
+                ], style={
+                    'backgroundColor': 'white',
+                    'padding': '10px',
+                    'borderRadius': '10px',
+                    'maxWidth': '600px',
+                    'margin': 'auto'
+                })
+            ],
+            style={
+                'display': 'none',
+                'position': 'fixed',
+                'top': '0',
+                'left': '0',
+                'width': '100%',
+                'height': '100%',
+                'backgroundColor': 'rgba(0, 0, 0, 0.6)',
+                'zIndex': '2000',
+                'alignItems': 'center',
+                'justifyContent': 'center'
+            }
+        )
     ])
 
     return layout
