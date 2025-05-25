@@ -1,4 +1,5 @@
 import dash
+from dash import html, dcc, dash_table
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
@@ -59,8 +60,9 @@ import pickle as pkl
 
 ##### 내가 수정한 코드 #######
 # Layout item IDs
-items = ['line_select', 'station_input', 'direction_input', 'predict_btn', 'result_graph']
-app = dash.Dash()
+items = ['line_select', 'station_input', 'direction_radio', 'result_graph']
+app = dash.Dash(suppress_callback_exceptions=True)
+
 app.layout = al.app_layout(items)
 
 station_dict = {
@@ -78,55 +80,103 @@ station_dict = {
         ('이촌', 430), ('동작', 431), ('총신대입구', 432), ('사당', 433), ('남태령', 434)
     ]
 }
-
+line_colors = {
+    "1호선": "#2955A4",  # (41, 85, 164)
+    "2호선": "#00BA00",  # (0, 186, 0)
+    "3호선": "#D2683D",  # (210, 104, 61)
+    "4호선": "#3B66B6",  # (59, 102, 182)
+    "5호선": "#7947A1",  # (121, 71, 151)
+    "6호선": "#96572A",  # (150, 87, 42)
+    "7호선": "#555D10",  # (85, 93, 16)
+    "8호선": "#B43867",  # (180, 56, 103)
+    "9호선": "#C6AF5B",  # (198, 175, 91)
+}
 
 
 @app.callback(
-    Output('result_graph', 'figure'),
-    Input('predict_btn', 'n_clicks'),
-    State('line_select', 'value'),
-    State('station_input', 'value'),
-    State('direction_input', 'value'),
-    prevent_initial_call=True
+    Output('info-modal', 'style'),
+    [Input('info-icon', 'n_clicks'),
+     Input('close-modal', 'n_clicks')],
+    State('info-modal', 'style')
 )
-def predict_congestion(n_clicks, line, station_name, direction):
+def toggle_modal(open_clicks, close_clicks, current_style):
+    ctx = dash.callback_context
+
+    if not ctx.triggered:
+        return current_style
+
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if trigger_id == "info-icon":
+        return {**current_style, 'display': 'flex'}
+    elif trigger_id == "close-modal":
+        return {**current_style, 'display': 'none'}
+    return current_style
+
+@app.callback(
+    Output('direction_radio', 'children'),
+    Input('line_select', 'value'),
+    Input('station_input', 'value'),
+)
+def update_direction_radios(line, station):
+    if not line or not station:
+        return ""
 
     station_list = station_dict.get(line, [])
     name_to_code = {name: code for name, code in station_list}
     code_to_name = {code: name for name, code in station_list}
 
-    # 현재 역 번호
-    curr_code = name_to_code.get(station_name)
+    curr_code = name_to_code.get(station)
+    if not curr_code:
+        return html.Div("해당 역명을 찾을 수 없습니다.")
 
-    # 다음 역 계산
+    up_name = code_to_name.get(curr_code - 1, "종점")
+    down_name = code_to_name.get(curr_code + 1, "종점")
+
+    return dcc.RadioItems(
+        id='direction_choice',
+        options=[
+            {"label": f"{up_name} 방면", "value": "up"},
+            {"label": f"{down_name} 방면", "value": "down"}
+        ],
+        value="up",
+        labelStyle={"display": "inline-block", "margin-right": "15px"}
+    )
+
+
+@app.callback(
+    Output('result_graph', 'figure'),
+    Input('direction_choice', 'value'),
+    State('line_select', 'value'),
+    State('station_input', 'value'),
+    prevent_initial_call=True
+)
+def predict_congestion(direction, line, station_name):
+    if not station_name or not line:
+        return go.Figure(layout_title_text="역명과 호선을 입력하세요")
+
+    station_list = station_dict.get(line, [])
+    name_to_code = {name: code for name, code in station_list}
+    code_to_name = {code: name for name, code in station_list}
+
+    curr_code = name_to_code.get(station_name)
     if curr_code is not None:
-        if direction == "up":
-            next_station_name = code_to_name.get(curr_code - 1, "종점")
-        else:
-            next_station_name = code_to_name.get(curr_code + 1, "종점")
-        heading_text = f"{next_station_name}역 방면 (10분 후 도착)"
+        next_station = code_to_name.get(curr_code - 1 if direction == "up" else curr_code + 1, "종점")
+        heading_text = f"{next_station}역 방면 (10분 후 도착)"
     else:
         heading_text = "알 수 없는 역"
-        
-    if not line or not station_name:
-        return go.Figure(layout_title_text="호선과 역명을 입력해주세요")
 
     try:
-        print("good")
-
         res = requests.post(
-            url="https://friendly-potato-6q69gr56xr634wqr-8000.app.github.dev/predict",  # 혹은 Codespaces용 외부 URL
-            headers={"accept": "application/json", "Content-Type": "application/json"},
+            url="https://friendly-potato-6q69gr56xr634wqr-8000.app.github.dev/predict",
+            headers={"Content-Type": "application/json"},
             json={
-                    "line": line,
-                    "station": station_name,
-                    "direction": direction
+                "line": line,
+                "station": station_name,
+                "direction": direction
             }
         )
-        print("응답 상태 코드:", res.status_code)
-        print("응답 내용:", res.text)
-
-        congestion = res.json()["predictions"]  # 길이 10 리스트
+        congestion = res.json()["predictions"]  # 10개 칸 예측값
     except Exception as e:
         print("API 호출 실패:", e)
         return go.Figure(layout_title_text="❗ 예측 서버 연결 오류")
@@ -134,12 +184,9 @@ def predict_congestion(n_clicks, line, station_name, direction):
     car_ids = [str(i) for i in range(1, 11)]
 
     def map_color(c):
-        if c <= 34:
-            return "green"
-        elif c <= 100:
-            return "gold"
-        else:
-            return "red"
+        if c <= 34: return "green"
+        elif c <= 100: return "gold"
+        else: return "red"
 
     colors = [map_color(c) for c in congestion]
 
@@ -148,17 +195,18 @@ def predict_congestion(n_clicks, line, station_name, direction):
         fig.add_trace(go.Bar(
             x=[car],
             y=[cong],
-            name=f"{car}호차",
             marker_color=color,
             text=f"{int(cong)}%",
             textposition='outside',
             textfont=dict(size=14, color="black"),
-            hovertext=f"{car}호차: {cong}%",
+            hovertext=f"{car}호차: {int(cong)}%",
             width=0.8
         ))
 
+    color = line_colors.get(line, "#000000")
+    colored_line = f"<span style='color:{color}'>{line}</span>"
     fig.update_layout(
-        title=f"{line} {station_name}역 - {heading_text}",
+        title=f"{colored_line} {station_name}역 - {heading_text}",
         showlegend=False,
         yaxis=dict(title="혼잡도 (%)", range=[0, 250]),
         xaxis=dict(title="호차"),
