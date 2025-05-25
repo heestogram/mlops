@@ -56,13 +56,13 @@ import mylib as my
 
 
 def app_layout(items):
-    line_id, station_id, direction_radio_id, graph_id = items
+    line_id, station_id, direction_radio_id, heading_id, graph_id = items
 
     # 호선별 색상
     line_colors = {
         "1호선": "#2955A4",
         "2호선": "#00BA00",
-        "3호선": "#D2683D",
+        "3호선": "#F36F21",
         "4호선": "#3B66B7",
         "5호선": "#794797",
         "6호선": "#96572A",
@@ -97,6 +97,9 @@ def app_layout(items):
 
         html.Br(),
 
+        html.Div(id='station_heading', style={"margin": "20px", "textAlign": "center"}),
+
+
         # 상/하행 선택 radio
         html.Div(id=direction_radio_id, style={"margin": "10px 0"}),
 
@@ -105,7 +108,6 @@ def app_layout(items):
         # 예측 그래프
         dcc.Graph(id=graph_id),
 
-        # ❓아이콘 + 이미지 함께 배치 (오른쪽 하단 고정)
         html.Div([
             html.Span("❓", id="info-icon", style={
                 'cursor': 'pointer',
@@ -127,7 +129,6 @@ def app_layout(items):
             'zIndex': '1000'
         }),
 
-        # ❓아이콘 클릭 시 나타나는 모달 이미지
         html.Div(
             id='info-modal',
             children=[
