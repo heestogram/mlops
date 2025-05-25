@@ -100,18 +100,16 @@ def app_layout(items):
         html.Div(id='station_heading', style={"margin": "20px", "textAlign": "center"}),
 
 
-        # 상/하행 선택 radio
         html.Div(id=direction_radio_id, style={"margin": "10px 0"}),
 
         html.Br(),
 
-        # 예측 그래프
         dcc.Graph(id=graph_id),
 
         html.Div([
-            html.Span("❓", id="info-icon", style={
+            html.Span("ℹ️", id="info-icon", style={
                 'cursor': 'pointer',
-                'fontSize': '20px',
+                'fontSize': '40px',
                 'color': '#007BFF',
                 'marginRight': '10px'
             }),
