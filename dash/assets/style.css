@@ -1,0 +1,35 @@
+/* 기본 스타일 */
+input[type="radio"] + label {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+/* Dash 내부 구조 대응 */
+input[type="radio"]:checked + span {
+  background-color: #F36F21 !important;
+  color: white !important;
+  border-color: #F36F21 !important;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+}
+
+/* RadioItems 내부 span 스타일 보완 */
+.css-1mqa38q {  /* Dash에서 자동 생성되는 label wrapper */
+  background-color: #f4f4f4;
+  color: black;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+}
+
+/* 선택된 상태 (자동으로 적용되는 클래스 사용) */
+.css-1mqa38q.is-selected {
+  background-color: #F36F21 !important;
+  color: white !important;
+  border-color: #F36F21;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+}

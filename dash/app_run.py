@@ -11,7 +11,8 @@ import requests
 import pandas as pd
 import numpy as np
 import sys, os
-import datetime
+from datetime import datetime, timedelta
+from datetime import date
 import pickle as pkl
 
 
@@ -60,7 +61,8 @@ import pickle as pkl
 
 ##### 내가 수정한 코드 #######
 # Layout item IDs
-items = ['line_select', 'station_input', 'direction_radio', 'station_heading', 'result_graph']
+items = ['line_select', 'station_input', 'direction_radio', 'station_heading', 'result_graph',
+         'model_input_text', 'date_select', 'hour_select', 'minute_select']
 app = dash.Dash(suppress_callback_exceptions=True)
 
 app.layout = al.app_layout(items)
@@ -139,22 +141,54 @@ def update_direction_radios(line, station):
             {"label": f"{up_name} 방면", "value": "up"},
             {"label": f"{down_name} 방면", "value": "down"}
         ],
-        value="up",
+        value=None,
         labelStyle={"display": "inline-block", "margin-right": "15px"}
     )
 
 
+
+@app.callback(
+    Output('date_select', 'options'),
+    Input('line_select', 'value')  
+)
+def update_date_options(_):
+    today = datetime.today()
+    options = [
+        {"label": d.strftime("%-m월 %-d일 %a") if i > 0 else "오늘", "value": d.strftime("%Y-%m-%d")}
+        for i, d in enumerate([today + timedelta(days=i) for i in range(7)])
+    ]
+    return options
+
 @app.callback(
     [Output('station_heading', 'children'),
-     Output('result_graph', 'figure')],
-    Input('direction_choice', 'value'),
+     Output('result_graph', 'figure'),
+     Output('model_input_text', 'children')],
+    Input('predict_button', 'n_clicks'),
+    State('direction_choice', 'value'),
     State('line_select', 'value'),
     State('station_input', 'value'),
+    State('date_select', 'value'),
+    State('hour_select', 'value'),
+    State('minute_select', 'value'),
     prevent_initial_call=True
 )
-def predict_congestion(direction, line, station_name):
-    if not station_name or not line:
-        return html.Div("입력 오류"), go.Figure()
+def predict_congestion(n_clicks, direction, line, station_name, date_val, hour, minute):
+    if not all([line, station_name, direction, date_val, hour, minute]):
+        return html.Div("⛔ 모든 입력값을 선택해주세요."), go.Figure(), "입력 누락"
+
+    if date_val == "오늘":
+        date_obj = date.today()
+    else:
+        try:
+            date_obj = date.fromisoformat(date_val)  # '2025-06-04' 같은 문자열 → datetime.date 객체
+        except Exception as e:
+            return html.Div("❌ 날짜 파싱 실패"), go.Figure(), f"날짜 오류: {e}"
+
+    hour = int(hour)
+    minute = int(minute)
+
+    time_str = f"{hour:02d}:{minute:02d}"
+
 
     station_list = station_dict.get(line, [])
     name_to_code = {name: code for name, code in station_list}
@@ -219,17 +253,19 @@ def predict_congestion(direction, line, station_name):
         res = requests.post(
             url="https://friendly-potato-6q69gr56xr634wqr-8000.app.github.dev/predict",
             headers={"Content-Type": "application/json"},
-            json={"line": line, "station": station_name, "direction": direction}
+            json={"line": line, "station": curr_code, "direction": direction, "date": str(date_obj), "time": time_str}
         )
         congestion = res.json()["predictions"]
+        model_input = res.json()["model_input"]
+
     except Exception as e:
         print("API 호출 실패:", e)
-        return heading, go.Figure(layout_title_text="❗ 예측 실패")
+        return heading, go.Figure(layout_title_text="❗ 예측 실패"), "❌ 예측 실패: API 응답 없음"
 
     def map_color(c):
-        if c <= 34: return "green"
-        elif c <= 100: return "gold"
-        else: return "red"
+        if c <= 34: return "#B6CFB6"
+        elif c <= 100: return "#ffd980"
+        else: return "#bf4040"
 
     car_ids = [str(i) for i in range(1, 11)]
     colors = [map_color(c) for c in congestion]
@@ -257,6 +293,13 @@ def predict_congestion(direction, line, station_name):
         bargap=0.2
     )
 
-    return heading, fig
+    formatted_input = html.Pre(
+        "\n".join(
+            [f"{k}: {v}" for k, v in model_input.items()]
+        ),
+        style={"fontFamily": "monospace", "whiteSpace": "pre-wrap"}
+    )
+
+    return heading, fig, formatted_input
     
 app.run(host="0.0.0.0", port=9101, debug=True) 

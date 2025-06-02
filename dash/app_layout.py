@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 
 import layout_components as lc
-import datetime
+from datetime import datetime, timedelta
+
 
 import mylib as my
 
@@ -56,7 +57,7 @@ import mylib as my
 
 
 def app_layout(items):
-    line_id, station_id, direction_radio_id, heading_id, graph_id = items
+    line_id, station_id, direction_radio_id, heading_id, graph_id, text_id, date_id, hour_id, minute_id = items
 
     # 호선별 색상
     line_colors = {
@@ -91,9 +92,34 @@ def app_layout(items):
                 id=station_id,
                 type="text",
                 placeholder="역명을 입력하세요",
-                style={"margin": "0 10px"}
+                style={
+                    "width": "150px",
+                    "margin": "0 10px",
+                    "padding": "8px",
+                    "border": "1px solid #ccc",
+                    "borderRadius": "4px",
+                    "fontSize": "14px"
+                }
+            ),
+            dcc.Dropdown(
+                id=date_id,
+                placeholder="날짜 선택",
+                style={"width": "180px"}
+            ),
+
+            dcc.Dropdown(
+                id=hour_id,
+                options=[{"label": str(h), "value": str(h)} for h in range(5, 24)],
+                placeholder="시",
+                style={"width": "70px"}
+            ),
+            dcc.Dropdown(
+                id=minute_id,
+                options=[{"label": f"{m:02d}", "value": f"{m:02d}"} for m in range(0, 60, 10)],
+                placeholder="분",
+                style={"width": "70px"}
             )
-        ], style={"display": "flex", "gap": "10px"}),
+        ], style={"display": "flex", "gap": "8px", "flexWrap": "wrap", "alignItems": "center"}),
 
         html.Br(),
 
@@ -101,6 +127,25 @@ def app_layout(items):
 
 
         html.Div(id=direction_radio_id, style={"margin": "10px 0"}),
+
+        html.Button(
+            "🚇 예측 실행", 
+            id="predict_button", 
+            n_clicks=0,
+            style={
+                "color": "black",
+                "border": "none",
+                "padding": "12px 24px",
+                "fontSize": "18px",
+                "fontWeight": "bold",
+                "borderRadius": "8px",
+                "cursor": "pointer",
+                "boxShadow": "2px 2px 5px rgba(0,0,0,0.2)",
+                "transition": "0.3s",
+                "marginTop": "20px",
+                'marginBottom': '20px'
+            }
+        ),
 
         html.Br(),
 
@@ -153,7 +198,8 @@ def app_layout(items):
                 'alignItems': 'center',
                 'justifyContent': 'center'
             }
-        )
-    ])
+        ),
+        html.Div(id='model_input_text')
+        ])
 
     return layout
