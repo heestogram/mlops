@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+fastapi/model.pkl
+fastapi/final_final_final.csv
+fastapi/preprocessing.pkl
