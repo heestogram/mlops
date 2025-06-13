@@ -57,14 +57,14 @@ import mylib as my
 
 
 def app_layout(items):
-    line_id, station_id, direction_radio_id, heading_id, graph_id, text_id, date_id, hour_id, minute_id = items
+    line_id, station_id, direction_radio_id, heading_id, graph_id, date_id, hour_id, minute_id = items
 
     # 호선별 색상
     line_colors = {
         "1호선": "#2955A4",
         "2호선": "#00BA00",
         "3호선": "#F36F21",
-        "4호선": "#3B66B7",
+        "4호선": "#00A9E0",
         "5호선": "#794797",
         "6호선": "#96572A",
         "7호선": "#555D0F",
@@ -73,7 +73,27 @@ def app_layout(items):
     }
 
     layout = html.Div([
-        html.H2("지하철 칸별 혼잡도 예측"),
+        html.Div([
+            html.H1("🚇 실시간 칸별 혼잡도 예측 시스템", style={
+                "fontSize": "36px",
+                "fontWeight": "bold",
+                "marginBottom": "10px",
+                "textAlign": "center",
+                "color": "#2c3e50"
+            }),
+            html.P("덜 붐비는 칸, 미리 찾아 타세요!", style={
+                "fontSize": "18px",
+                "color": "#7f8c8d",
+                "textAlign": "center",
+                "marginTop": "0"
+            })
+        ], style={
+            "padding": "20px 10px",
+            "backgroundColor": "#ecf0f1",
+            "borderRadius": "12px",
+            "boxShadow": "0 4px 10px rgba(0,0,0,0.1)",
+            "marginBottom": "20px"
+        }),
 
         # 호선 선택 및 역명 입력
         html.Div([
@@ -106,11 +126,11 @@ def app_layout(items):
                 placeholder="날짜 선택",
                 style={"width": "180px"}
             ),
-            
+
 
             dcc.Dropdown(
                 id=hour_id,
-                options=[{"label": str(h), "value": str(h)} for h in range(5, 24)],
+                options=[{"label": f"{h:02d}", "value": f"{h:02d}"} for h in range(5, 24)],
                 placeholder="시",
                 style={"width": "70px"}
             ),

@@ -61,8 +61,7 @@ import pickle as pkl
 
 ##### 내가 수정한 코드 #######
 # Layout item IDs
-items = ['line_select', 'station_input', 'direction_radio', 'station_heading', 'result_graph',
-         'model_input_text', 'date_select', 'hour_select', 'minute_select']
+items = ['line_select', 'station_input', 'direction_radio', 'station_heading', 'result_graph', 'date_select', 'hour_select', 'minute_select']
 app = dash.Dash(suppress_callback_exceptions=True)
 
 app.layout = al.app_layout(items)
@@ -86,7 +85,7 @@ line_colors = {
     "1호선": "#2955A4",  
     "2호선": "#00BA00",  
     "3호선": "#F36F21",  
-    "4호선": "#3B66B6", 
+    "4호선": "#00A9E0", 
     "5호선": "#7947A1",  
     "6호선": "#96572A",  
     "7호선": "#555D10",  
@@ -161,8 +160,7 @@ def update_date_options(_):
 
 @app.callback(
     [Output('station_heading', 'children'),
-     Output('result_graph', 'figure'),
-     Output('model_input_text', 'children')],
+     Output('result_graph', 'figure')],
     Input('predict_button', 'n_clicks'),
     State('direction_choice', 'value'),
     State('line_select', 'value'),
@@ -174,7 +172,7 @@ def update_date_options(_):
 )
 def predict_congestion(n_clicks, direction, line, station_name, date_val, hour, minute):
     if not all([line, station_name, direction, date_val, hour, minute]):
-        return html.Div("⛔ 모든 입력값을 선택해주세요."), go.Figure(), "입력 누락"
+        return html.Div("⛔ 모든 입력값을 선택해주세요."), go.Figure()
 
     if date_val == "오늘":
         date_obj = date.today()
@@ -182,7 +180,7 @@ def predict_congestion(n_clicks, direction, line, station_name, date_val, hour, 
         try:
             date_obj = date.fromisoformat(date_val)  # '2025-06-04' 같은 문자열 → datetime.date 객체
         except Exception as e:
-            return html.Div("❌ 날짜 파싱 실패"), go.Figure(), f"날짜 오류: {e}"
+            return html.Div("❌ 날짜 파싱 실패"), go.Figure()
 
     hour = int(hour)
     minute = int(minute)
@@ -260,7 +258,7 @@ def predict_congestion(n_clicks, direction, line, station_name, date_val, hour, 
 
     except Exception as e:
         print("API 호출 실패:", e)
-        return heading, go.Figure(layout_title_text="❗ 예측 실패"), "❌ 예측 실패: API 응답 없음"
+        return heading, go.Figure(layout_title_text="❗ 예측 실패")
 
     def map_color(c):
         if c <= 34: return "#B6CFB6"
@@ -293,13 +291,7 @@ def predict_congestion(n_clicks, direction, line, station_name, date_val, hour, 
         bargap=0.2
     )
 
-    formatted_input = html.Pre(
-        "\n".join(
-            [f"{k}: {v}" for k, v in model_input.items()]
-        ),
-        style={"fontFamily": "monospace", "whiteSpace": "pre-wrap"}
-    )
 
-    return heading, fig, formatted_input
+    return heading, fig
     
 app.run(host="0.0.0.0", port=9101, debug=True) 
